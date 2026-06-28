@@ -23,23 +23,12 @@ class VoteController extends Controller
 
             $this->voteService->cast($poll, $option, $request->ip());
 
-            $counts = $this->counter->getCounts($poll->id);
-            $total  = array_sum($counts);
             $poll->loadMissing('options');
 
             return response()->json([
                 'success' => true,
                 'message' => 'Vote recorded',
-                'data'    => [
-                    'total'   => $total,
-                    'options' => $poll->options->map(fn ($opt) => [
-                        'id'          => $opt->id,
-                        'votes_count' => $counts[$opt->id] ?? 0,
-                        'percentage'  => $total > 0
-                            ? round((($counts[$opt->id] ?? 0) / $total) * 100, 1)
-                            : 0,
-                    ]),
-                ],
+                'data'    => $this->counter->results($poll),
             ]);
         } catch (\RuntimeException $e) {
             return response()->json([

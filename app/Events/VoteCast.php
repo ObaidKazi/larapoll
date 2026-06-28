@@ -27,21 +27,9 @@ class VoteCast implements ShouldBroadcast
     public function broadcastWith(): array
     {
         $counter = app(VoteCounter::class);
-        $counts  = $counter->getCounts($this->pollId);
-        $total   = array_sum($counts);
-
+        
         $poll = Poll::with('options')->find($this->pollId);
 
-        return [
-            'total'   => $total,
-            'options' => $poll->options->map(fn ($opt) => [
-                'id'          => $opt->id,
-                'label'       => $opt->label,
-                'votes_count' => $counts[$opt->id] ?? 0,
-                'percentage'  => $total > 0
-                    ? round((($counts[$opt->id] ?? 0) / $total) * 100, 1)
-                    : 0,
-            ]),
-        ];
+        return $counter->results($poll);
     }
 }

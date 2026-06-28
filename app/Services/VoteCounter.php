@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Poll;
 use Illuminate\Support\Facades\Redis;
 
 class VoteCounter
@@ -57,5 +58,25 @@ class VoteCounter
     private function countsKey(int $pollId): string
     {
         return "poll:{$pollId}:counts";
+    }
+
+    public function results(Poll $poll): array
+    {
+        $counts = $this->getCounts($poll->id);
+        $total  = array_sum($counts);
+
+        $poll->loadMissing('options');
+
+        return [
+            'total'   => $total,
+            'options' => $poll->options->map(fn ($opt) => [
+                'id'          => $opt->id,
+                'label'       => $opt->label,
+                'votes_count' => $counts[$opt->id] ?? 0,
+                'percentage'  => $total > 0
+                    ? round((($counts[$opt->id] ?? 0) / $total) * 100, 1)
+                    : 0,
+            ])->all(),
+        ];
     }
 }
