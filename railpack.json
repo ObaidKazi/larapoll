@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "steps": {
+    "extensions": {
+      "commands": [
+        "install-php-extensions ctype curl dom fileinfo filter hash mbstring openssl pcre pdo session tokenizer xml redis intl zip bcmath gd"
+      ]
+    }
+  }
+}
