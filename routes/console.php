@@ -7,4 +7,4 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('votes:sync')->everyFiveMinutes();
+Schedule::command('app:sync-vote-counts')->everyFiveMinutes();
