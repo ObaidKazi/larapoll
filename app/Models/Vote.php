@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Models;
-
+use App\Services\VoteCounter;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory; 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Vote extends Model
 {
     use HasFactory;
@@ -16,5 +16,26 @@ class Vote extends Model
     public function option()
     {
         return $this->belongsTo(PollOption::class, 'poll_option_id');
+    }
+    protected static function booted()
+    {
+        static::deleting(function (Vote $vote) {
+            app(VoteCounter::class)->rollback(
+                $vote->poll_id,
+                $vote->poll_option_id,
+                $vote->ip_address
+            );
+            $vote->option?->decrement('votes_count');
+        });
+
+        static::deleted(function (Vote $vote) {
+            $poll = \App\Models\Poll::find($vote->poll_id);
+            if ($poll) {
+                broadcast(new \App\Events\VoteCast(
+                    $poll->id,
+                    app(VoteCounter::class)->results($poll)
+                ));
+            }
+        });
     }
 }

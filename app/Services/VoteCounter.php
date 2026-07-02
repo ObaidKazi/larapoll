@@ -27,6 +27,12 @@ class VoteCounter
         return true;
     }
 
+    public function rollback(int $pollId, int $optionId, string $ip): void
+    {
+        Redis::srem($this->votersKey($pollId), $ip);
+        
+        Redis::hincrby($this->countsKey($pollId), $optionId, -1);
+    }
 
     public function getCounts(int $pollId): array
     {

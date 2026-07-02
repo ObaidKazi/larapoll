@@ -26,9 +26,11 @@ class PollController extends Controller
         $this->voteService->ensureSeeded($poll);
 
         $hasVoted = $this->voteService->hasVoted($poll, $request->ip());
+        
+        $results  = $this->counter->results($poll); 
 
-        $counts = $this->counter->getCounts($poll->id);
+        return view('polls.show', compact('poll', 'hasVoted', 'results'));
 
-        return view('polls.show', compact('poll', 'hasVoted', 'counts'));
+
     }
 }

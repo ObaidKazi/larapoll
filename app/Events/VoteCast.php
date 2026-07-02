@@ -12,7 +12,7 @@ class VoteCast implements ShouldBroadcast
 {
     use SerializesModels;
 
-    public function __construct(public int $pollId) {}
+    public function __construct(public int $pollId, public array $results) {}
 
     public function broadcastOn(): Channel
     {
@@ -26,10 +26,6 @@ class VoteCast implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
-        $counter = app(VoteCounter::class);
-        
-        $poll = Poll::with('options')->find($this->pollId);
-
-        return $counter->results($poll);
+        return $this->results;
     }
 }

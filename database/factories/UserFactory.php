@@ -4,8 +4,6 @@ namespace Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<User>
@@ -27,14 +25,10 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'password' => bcrypt('password'),
-            'is_admin' => false,
+            'email_verified_at' => now(),
+            'password' => static::$password ??= bcrypt('password'),
+            'remember_token' => \Illuminate\Support\Str::random(10),
         ];
-    }
-
-    public function admin(): static
-    {
-        return $this->state(['is_admin' => true]);
     }
 
     /**
@@ -42,8 +36,34 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * User ko 'admin' role assign karo — apna poll create/edit/delete kar sakta hai.
+     */
+    public function admin(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            if (!\Spatie\Permission\Models\Role::where('name', 'admin')->where('guard_name', 'web')->exists()) {
+                \Spatie\Permission\Models\Role::create(['name' => 'admin', 'guard_name' => 'web']);
+            }
+            $user->assignRole('admin');
+        });
+    }
+
+    /**
+     * User ko 'super-admin' role assign karo — sab kuch access kar sakta hai.
+     */
+    public function superAdmin(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            if (!\Spatie\Permission\Models\Role::where('name', 'super_admin')->where('guard_name', 'web')->exists()) {
+                \Spatie\Permission\Models\Role::create(['name' => 'super_admin', 'guard_name' => 'web']);
+            }
+            $user->assignRole('super_admin');
+        });
     }
 }

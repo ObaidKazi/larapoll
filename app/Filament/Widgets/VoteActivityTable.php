@@ -89,7 +89,11 @@ class VoteActivityTable extends TableWidget
     {
         $query = Vote::query()
             ->with(['poll', 'option']);
-
+        if (! auth()->user()->hasRole('super_admin')) {
+            $query->whereHas('poll', function (Builder $pollQuery) {
+                $pollQuery->where('user_id', auth()->user()->id);
+            });
+        }
         if ($this->pollId) {
             $query->where('poll_id', $this->pollId);
         }

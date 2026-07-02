@@ -12,7 +12,7 @@
         @endif
         <h1 class="h3 fw-bold">{{ $poll->question }}</h1>
         @if($poll->ends_at && $poll->isOpen())
-            <p class="text-muted small mb-0">Closes {{ $poll->ends_at->diffForHumans() }}</p>
+            <p class="text-muted small mb-0">Closes {{ $poll->ends_at->timezone(config('app.timezone'))->diffForHumans() }}</p>
         @endif
     </div>
 
@@ -22,13 +22,16 @@
     @elseif(!$poll->isOpen())
         <div class="alert alert-secondary py-2">This poll is closed. Final results below.</div>
     @endif
-
+    @php
+       $resultsById = collect($results['options'])->keyBy('id');
+    @endphp
     {{-- Options --}}
     <div class="list-group mb-4">
         @foreach($poll->options as $option)
             @php
-                $total = $poll->total_votes;
-                $pct   = $total > 0 ? round(($option->votes_count / $total) * 100, 1) : 0;
+                $optResult = $resultsById[$option->id];
+                $pct = $optResult['percentage'];
+                $total = $optResult['votes_count'];
             @endphp
             <div class="list-group-item position-relative
                         {{ (!$hasVoted && $poll->isOpen()) ? 'list-group-item-action' : '' }}"
@@ -52,7 +55,7 @@
                     </div>
                     <div class="text-end">
                         <span class="fw-bold" data-pct="{{ $option->id }}">{{ $pct }}%</span>
-                        <small class="text-muted" data-count="{{ $option->id }}">({{ $option->votes_count }})</small>
+                        <small class="text-muted" data-count="{{ $option->id }}">({{$total}})</small>
                     </div>
                 </div>
             </div>

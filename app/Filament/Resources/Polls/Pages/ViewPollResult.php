@@ -19,8 +19,12 @@ class ViewPollResult extends Page
 
     public function mount($record): void
     {   
-        
-        $this->record = Poll::with('options')->where('id', $record->id)->first();
+        $user = auth()->user();
+
+        if (! $user->hasRole('super_admin') && $this->record->user_id !== $user->id) {
+            abort(403, 'You do not have permission to view these poll results.');
+        }
+        $this->record = Poll::with('options')->where('id', $record->id)->firstOrFail();
         
     }
 
@@ -52,5 +56,8 @@ class ViewPollResult extends Page
             VoteActivityTable::make(['pollId' => $this->record->id]),
         ];
     }
+    
+
+    
 
 }

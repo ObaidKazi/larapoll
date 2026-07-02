@@ -10,10 +10,13 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SaveVote implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    public int $tries = 5;
+    public int $backoff = 30; 
 
     public function __construct(
         public int $pollId,
@@ -24,7 +27,6 @@ class SaveVote implements ShouldQueue
     public function handle(): void
     {
         DB::transaction(function () {
-            // Skip if already have vote
             $exists = Vote::where('poll_id', $this->pollId)
                 ->where('ip_address', $this->ip)
                 ->exists();
@@ -41,5 +43,13 @@ class SaveVote implements ShouldQueue
 
             PollOption::where('id', $this->optionId)->increment('votes_count');
         });
+    }
+    
+    public function failed(\Throwable $exception): void
+    {
+        Log::error("SaveVote permanently failed for poll {$this->pollId}, option {$this->optionId}", [
+            'ip' => $this->ip,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

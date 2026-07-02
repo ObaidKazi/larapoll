@@ -23,6 +23,7 @@ class Poll extends Model
 
     protected static function booted(){
         static::creating(function (Poll $poll) {
+             $poll->user_id ??= auth()->id();
              $poll->slug = Str::slug($poll->question) . '-' . Str::random(6);
         });
     }

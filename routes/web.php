@@ -11,6 +11,6 @@ Route::get('/polls/{poll:slug}', [PollController::class, 'show'])->name('polls.s
 
 Route::post('/polls/{poll}/vote', [VoteController::class, 'store'])
     ->name('polls.vote')
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:5,1');
 
 

@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Poll;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,6 +21,7 @@ class PollFactory extends Factory
         return [
             'question' => $this->faker->sentence(6), 
             'is_active' => 1,
+            'user_id' => User::factory(),
         ];
     }
 }

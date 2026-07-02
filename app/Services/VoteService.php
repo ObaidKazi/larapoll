@@ -6,6 +6,7 @@ use App\Events\VoteCast;
 use App\Jobs\SaveVote;
 use App\Models\Poll;
 use App\Models\PollOption;
+use Illuminate\Support\Facades\Cache;
 
 class VoteService
 {
@@ -32,7 +33,9 @@ class VoteService
 
         SaveVote::dispatch($poll->id, $option->id, $ip);
 
-        broadcast(new VoteCast($poll->id));
+        $results = $this->counter->results($poll); 
+        
+        broadcast(new VoteCast($poll->id, $results));
     }
 
     public function hasVoted(Poll $poll, string $ip): bool
@@ -47,18 +50,24 @@ class VoteService
         if (!empty($counts)) {
             return;
         }
+        $lockKey = "poll:{$poll->id}:seed-lock";
+        $lock = Cache::lock($lockKey, 10);
 
-        $poll->loadMissing('options');
-
-        $optionCounts = $poll->options
-            ->pluck('votes_count', 'id')
-            ->toArray();
-
-        $voterIps = $poll->votes()
-            ->whereNotNull('ip_address')
-            ->pluck('ip_address')
-            ->toArray();
-
-        $this->counter->seed($poll->id, $optionCounts, $voterIps);
+        if ($lock->get()) {
+            try {
+                $counts = $this->counter->getCounts($poll->id);
+                if (!empty($counts)) {
+                    return;
+                }
+                $poll->loadMissing('options');
+                $optionCounts = $poll->options->pluck('votes_count', 'id')->toArray();
+                $voterIps = $poll->votes()->whereNotNull('ip_address')->pluck('ip_address')->toArray();
+                $this->counter->seed($poll->id, $optionCounts, $voterIps);
+            } finally {
+                $lock->release();
+            }
+        } else {
+            usleep(100000); 
+        }
     }
 }

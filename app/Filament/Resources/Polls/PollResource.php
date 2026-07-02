@@ -14,6 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use App\Models\Poll;
+use Illuminate\Database\Eloquent\Builder;
 
 class PollResource extends Resource
 {
@@ -39,7 +40,17 @@ class PollResource extends Resource
             //
         ];
     }
+
     
+    public static function getEloquentQuery(): Builder
+        {
+            $query = parent::getEloquentQuery();
+
+            return auth()->user()->hasRole('super_admin')
+                ? $query
+                : $query->where('user_id', auth()->id());
+        }
+
     public static function getPages(): array
     {
         return [

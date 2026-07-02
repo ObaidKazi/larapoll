@@ -17,7 +17,11 @@ class VoteStatsOverview extends StatsOverviewWidget
     protected function getStats(): array
     {
         $query = Vote::query();
-
+        if(!auth()->user()->hasRole('super_admin')){
+            $query->whereHas('poll', function ($query) {
+                $query->where('user_id', auth()->user()->id);
+            });
+        }
         if ($this->pollId) {
             $query->where('poll_id', $this->pollId);
         }
