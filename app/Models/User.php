@@ -6,10 +6,11 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable  
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasRoles;
@@ -53,5 +54,9 @@ class User extends Authenticatable
         return $this->hasMany(Poll::class);
     }
 
+    public function canAccessPanel(Panel $panel): bool
+    {
+      return $this->hasRole('super_admin') || $this->hasRole('admin');
+    }
 
 }
